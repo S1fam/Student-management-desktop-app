@@ -1,3 +1,4 @@
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, \
     QVBoxLayout, QComboBox
@@ -23,13 +24,14 @@ class MainWindow(QMainWindow):
 
         about_action = QAction("About", self)
         help_menu_item.addAction(about_action)
+        about_action.setMenuRole(QAction.MenuRole.NoRole)
 
         help_action = QAction("Help", self)
         help_menu_item.addAction(help_action)
 
         search_action = QAction("Search", self)
-        search_action.triggered.connect(self.search)
         edit_menu_item.addAction(search_action)
+        search_action.triggered.connect(self.search)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -61,28 +63,28 @@ class InsertDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Insert Student Data")
-        self.setFixedWidth(200)
+        self.setFixedWidth(300)
         self.setFixedHeight(300)
 
         layout = QVBoxLayout()
 
-        # add student name widget
+        # Add student name widget
         self.student_name = QLineEdit()
         self.student_name.setPlaceholderText("Name")
         layout.addWidget(self.student_name)
 
-        # add course combobox
+        # Add course combobox
         self.course_name = QComboBox()
         courses = ["Biology", "Math", "Astronomy", "Physics"]
         self.course_name.addItems(courses)
         layout.addWidget(self.course_name)
 
-        # add mobile widget
+        # Add mobile widget
         self.mobile = QLineEdit()
         self.mobile.setPlaceholderText("Mobile")
         layout.addWidget(self.mobile)
 
-        # add a submit button
+        # Add a submit button
         button = QPushButton("Register")
         button.clicked.connect(self.add_student)  # call add student method
         layout.addWidget(button)
@@ -107,8 +109,8 @@ class SearchDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Search Student")
-        self.setFixedWidth(200)
-        self.setFixedHeight(200)
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
 
         layout = QVBoxLayout()
 
@@ -117,13 +119,25 @@ class SearchDialog(QDialog):
         layout.addWidget(self.student_name)
 
         button = QPushButton("Search")
-        button.clicked.connect(self.find_occurance)  # call add student method
+        button.clicked.connect(self.search)
         layout.addWidget(button)
 
         self.setLayout(layout)
 
-    def find_occurance(self):
-        pass
+    def search(self):
+        name = self.student_name.text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE name = ?", (name, ))
+        rows = list(result)
+        print(rows)
+        items = main_window.table.findItems(name, Qt.MatchFlag.MatchFixedString)
+        for item in items:
+            print(item)
+            main_window.table.item(item.row(), 1).setSelected(True)
+
+        cursor.close()
+        connection.close()
 
 
 app = QApplication(sys.argv)
